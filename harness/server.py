@@ -33,7 +33,6 @@ from harness import config
 from harness.adapters import ADAPTERS
 from harness.logging import RunLogger
 from harness.sessions.session import Session
-from harness.sessions.vad import VADStream
 
 app = FastAPI(title="S2S Comparison Harness")
 
@@ -141,6 +140,7 @@ async def _run_turn(websocket: WebSocket, adapter, logger: RunLogger) -> None:
         finally:
             await frame_queue.put(None)
 
+    from harness.sessions.vad import VADStream  # lazy: webrtcvad only needed in turn mode
     vad = VADStream(
         sample_rate=config.SAMPLE_RATE,
         frame_duration_ms=config.VAD_FRAME_MS,

@@ -1,4 +1,5 @@
 numpy
+setuptools
 websockets
 python-dotenv
 pyyaml
