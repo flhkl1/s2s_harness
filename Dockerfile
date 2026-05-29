@@ -1,4 +1,5 @@
 # harness-api — no GPU required
+# bump: 1
 FROM python:3.12-slim
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
