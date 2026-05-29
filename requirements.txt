@@ -1,4 +1,3 @@
-sounddevice
 numpy
 websockets
 python-dotenv

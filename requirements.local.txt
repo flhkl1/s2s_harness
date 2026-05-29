@@ -1,0 +1,3 @@
+# Additional deps for running run_harness.py locally (mic + speaker)
+-r requirements.txt
+sounddevice
