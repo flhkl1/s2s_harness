@@ -1,0 +1,11 @@
+sounddevice
+numpy
+websockets
+python-dotenv
+pyyaml
+webrtcvad
+dashscope
+fastapi
+uvicorn[standard]
+opuslib
+aiohttp

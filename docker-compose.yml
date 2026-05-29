@@ -1,0 +1,77 @@
+version: "3.9"
+
+# Local GPU development.
+# Requirements: NVIDIA driver ≥ 550, nvidia-container-toolkit (see SETUP_CUDA.md).
+# All services share the host HuggingFace cache to avoid re-downloading models.
+
+x-hf-cache: &hf-cache
+  type: bind
+  source: ${HF_HOME:-~/.cache/huggingface}
+  target: /root/.cache/huggingface
+
+x-gpu: &gpu
+  runtime: nvidia
+  environment:
+    NVIDIA_VISIBLE_DEVICES: all
+    NVIDIA_DRIVER_CAPABILITIES: compute,utility
+
+services:
+
+  harness-api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    env_file: .env
+    environment:
+      KAME_HOST: kame-server
+      MOSHIRAG_HOST: moshirag-main
+    depends_on:
+      - kame-server
+      - moshirag-main
+
+  kame-server:
+    build:
+      context: .
+      dockerfile: Dockerfile.kame
+    <<: *gpu
+    ports:
+      - "8998:8998"
+    env_file: .env
+    volumes:
+      - *hf-cache
+
+  moshirag-main:
+    build:
+      context: .
+      dockerfile: Dockerfile.moshirag
+    <<: *gpu
+    ports:
+      - "8999:8999"
+    env_file: .env
+    environment:
+      REFERENCE_ENCODER_URL: http://moshirag-cond:8001
+    depends_on:
+      - moshirag-cond
+    volumes:
+      - *hf-cache
+
+  moshirag-cond:
+    build:
+      context: .
+      dockerfile: Dockerfile.moshirag
+    <<: *gpu
+    ports:
+      - "8001:8001"
+    env_file: .env
+    # Override CMD to run the reference text encoder (conditioner) service
+    command: >
+      python3.12 -m moshi.moshi.server_conditioner
+      --config hf://kyutai/moshika-rag-pytorch-bf16/config.json
+      --moshi-weight hf://kyutai/moshika-rag-pytorch-bf16/model.safetensors
+      --cuda-device 0
+      --conditioner reference_with_time
+      --port 8001
+    volumes:
+      - *hf-cache

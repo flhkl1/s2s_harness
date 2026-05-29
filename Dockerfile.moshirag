@@ -1,0 +1,34 @@
+# moshirag-main / moshirag-cond — Railway A100 40 GB GPU required
+#
+# Shared image for both MoshiRAG services. The CMD is overridden per service
+# in railway.toml (or docker-compose.yml for local dev).
+#
+# moshirag-main  — Moshi speech server            (port 8999)
+# moshirag-cond  — reference text encoder         (port 8001)
+#
+# External dependencies (set as Railway env vars on moshirag-main):
+#   OPENAI_API_KEY     — retrieval LLM (same as KAME oracle, controlled variable)
+#   LLM_BASE_URL       — https://api.openai.com/v1
+#   LLM_MODEL_NAME     — gpt-4o-mini
+#   LLM_API_KEY        — same value as OPENAI_API_KEY (moshi-rag env var name)
+#   REFERENCE_ENCODER_URL — http://moshirag-cond:8001 (Railway internal URL)
+#   STT_API_KEY        — Gradium ASR key
+
+FROM nvidia/cuda:12.4.1-cudnn-runtime-ubuntu22.04
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    python3.12 python3.12-dev python3-pip git \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN python3.12 -m pip install --no-cache-dir \
+    "moshi[rag] @ git+https://github.com/kyutai-labs/moshi-rag.git"
+
+# Default: run the main speech server.
+# Override CMD in railway.toml for the conditioner service.
+EXPOSE 8999
+CMD ["python3.12", "-m", "moshi.moshi.server", \
+     "--config", "hf://kyutai/moshika-rag-pytorch-bf16/config.json", \
+     "--moshi-weight", "hf://kyutai/moshika-rag-pytorch-bf16/model.safetensors", \
+     "--cuda-device", "0", \
+     "--host", "0.0.0.0", "--port", "8999", \
+     "--gradium-stt"]

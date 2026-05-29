@@ -1,0 +1,15 @@
+# Railway configuration for the harness-api service.
+#
+# The model servers (kame-server, moshirag-main, moshirag-cond) are separate
+# Railway services that each point to their own Dockerfile. Configure them in
+# the Railway dashboard or via `railway service` — see SETUP_CUDA.md.
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+healthcheckPath = "/health"
+healthcheckTimeout = 30
+restartPolicyType = "ON_FAILURE"
+restartPolicyMaxRetries = 3
